@@ -6,15 +6,18 @@ DROP PROCEDURE IF EXISTS ComputeAverageWeightedScoreForUser;
 DELIMITER //
 CREATE PROCEDURE ComputeAverageWeightedScoreForUsers()
 BEGIN
-    UPDATE users AS U, 
-        (SELECT U.id, SUM(score * weight) / SUM(weight) AS w_avg 
-        FROM users AS U 
-        JOIN corrections as C ON U.id=C.user_id 
-        JOIN projects AS P ON C.project_id=P.id 
-        GROUP BY U.id)
-    AS WA
-    SET U.average_score = WA.w_avg 
-    WHERE U.id=WA.id;
+    UPDATE users
+    JOIN (
+        SELECT user_id, SUM(score * weight) / SUM(weight) AS w_avg
+        FROM (
+            SELECT user_id, project_id, score, weight
+            FROM corrections
+            LEFT JOIN projects
+            ON corrections.project_id = projects.id
+        ) AS a
+        GROUP BY user_id
+    ) AS b ON users.id = b.user_id
+    SET users.average_score = b.w_avg;
 END;
 //
 
