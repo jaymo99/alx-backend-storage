@@ -1,0 +1,2 @@
+// Regex filter in MongoDB
+db.school.find({name: /^Holberton/ })
