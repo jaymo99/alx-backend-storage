@@ -7,6 +7,7 @@ import redis
 from typing import Callable, Union
 import uuid
 
+
 def count_calls(method: Callable) -> Callable:
     """
     Decorator to count calls in Cache class
@@ -21,6 +22,26 @@ def count_calls(method: Callable) -> Callable:
     return wrapper
 
 
+def call_history(method: Callable) -> Callable:
+    """
+    Decorator to store history of inputs and outputs
+    for a particular function
+    """
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        """Maintains a counter every time the method is called
+        """
+        input = "{}:inputs".format(method.__qualname__)
+        output = "{}:outputs".format(method.__qualname__)
+
+        key = method(self, *args, **kwargs)
+        self._redis.rpush(input,  str(args))
+        self._redis.rpush(output,  str(key))
+
+        return key
+    return wrapper
+
+
 class Cache:
     """
     Creates & manages cache on Redis server
@@ -30,6 +51,7 @@ class Cache:
         self._redis = redis.Redis()
         self._redis.flushdb()
 
+    @call_history
     @count_calls
     def store(self, data: Union[str, bytes, int, float]) -> str:
         """
