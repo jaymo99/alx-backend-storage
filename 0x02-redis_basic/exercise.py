@@ -61,7 +61,11 @@ def replay(method: Callable):
     outputs = db.lrange("{}:outputs".format(method_name), 0, -1)
 
     for input, output in zip(inputs, outputs):
-        print("{}(*{}) -> {}".format(method_name, input, output))
+        print("{}(*{}) -> {}".format(
+            method_name,
+            input.decode('UTF-8'),
+            output.decode('UTF-8')
+        ))
 
 
 class Cache:
